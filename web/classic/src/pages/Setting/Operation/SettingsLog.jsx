@@ -46,6 +46,7 @@ export default function SettingsLog(props) {
   const [loadingCleanHistoryLog, setLoadingCleanHistoryLog] = useState(false);
   const [inputs, setInputs] = useState({
     LogConsumeEnabled: false,
+    RequestLogOnlyUsers: '',
     historyTimestamp: dayjs().subtract(1, 'month').toDate(),
   });
   const refForm = useRef();
@@ -215,6 +216,26 @@ export default function SettingsLog(props) {
                     });
                   }}
                 />
+              </Col>
+              <Col xs={24} sm={24} md={16} lg={16} xl={16}>
+                <Form.Input
+                  field={'RequestLogOnlyUsers'}
+                  label={t('请求日志仅记录用户')}
+                  placeholder={t('留空为记录全部；示例：alice,bob,1001,1002')}
+                  onChange={(value) => {
+                    setInputs({
+                      ...inputs,
+                      RequestLogOnlyUsers: value,
+                    });
+                  }}
+                />
+                <Text
+                  type='tertiary'
+                  size='small'
+                  style={{ display: 'block', marginTop: 4, marginBottom: 8 }}
+                >
+                  {t('按用户名或用户ID过滤请求日志，使用英文逗号分隔')}
+                </Text>
               </Col>
               <Col xs={24} sm={12} md={8} lg={8} xl={8}>
                 <Spin spinning={loadingCleanHistoryLog}>

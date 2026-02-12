@@ -30,11 +30,17 @@ func RequestLogDB() gin.HandlerFunc {
 			startTime = requestStartTime
 		}
 
+		userID := c.GetInt("id")
+		username := c.GetString("username")
+		if !common.ShouldRecordRequestLogForUser(userID, username) {
+			return
+		}
+
 		body, bodyBytes, isTruncated := getRequestBodyPreview(c, common.RequestLogMaxBodyBytes)
 		params := model.RecordRequestLogParams{
 			RequestId:       c.GetString(common.RequestIdKey),
-			UserId:          c.GetInt("id"),
-			Username:        c.GetString("username"),
+			UserId:          userID,
+			Username:        username,
 			TokenId:         c.GetInt("token_id"),
 			Group:           c.GetString("group"),
 			ModelName:       c.GetString("original_model"),
