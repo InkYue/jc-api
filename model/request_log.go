@@ -84,7 +84,18 @@ func RecordRequestLog(params RecordRequestLogParams) {
 	if !isRequestLogTableReady() {
 		return
 	}
-	log := &RequestLog{
+	log := newRequestLogEntity(params)
+	if common.RequestLogAsyncEnabled {
+		enqueueRequestLog(log)
+		return
+	}
+	if err := writeRequestLogsBatch([]*RequestLog{log}); err != nil {
+		common.SysLog("failed to record request log: " + err.Error())
+	}
+}
+
+func newRequestLogEntity(params RecordRequestLogParams) *RequestLog {
+	return &RequestLog{
 		CreatedAt:       common.GetTimestamp(),
 		RequestId:       truncateByBytes(params.RequestId, 64),
 		UserId:          params.UserId,
@@ -105,9 +116,17 @@ func RecordRequestLog(params RecordRequestLogParams) {
 		IsBodyTruncated: params.IsBodyTruncated,
 		RequestBody:     params.RequestBody,
 	}
-	if err := LOG_DB.Create(log).Error; err != nil {
-		common.SysLog("failed to record request log: " + err.Error())
+}
+
+func writeRequestLogsBatch(logs []*RequestLog) error {
+	if len(logs) == 0 {
+		return nil
 	}
+	batchSize := common.RequestLogWriteBatchSize
+	if batchSize <= 0 {
+		batchSize = 100
+	}
+	return LOG_DB.CreateInBatches(logs, batchSize).Error
 }
 
 func isRequestLogTableReady() bool {

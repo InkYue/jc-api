@@ -88,6 +88,28 @@ func InitEnv() {
 	if RequestLogMaxBodyBytes < 0 {
 		RequestLogMaxBodyBytes = 0
 	}
+	RequestLogAsyncEnabled = GetEnvOrDefaultBool("REQUEST_LOG_ASYNC_ENABLED", true)
+	RequestLogAsyncQueueSize = GetEnvOrDefault("REQUEST_LOG_ASYNC_QUEUE_SIZE", 4096)
+	if RequestLogAsyncQueueSize <= 0 {
+		RequestLogAsyncQueueSize = 4096
+	}
+	RequestLogWriteBatchSize = GetEnvOrDefault("REQUEST_LOG_WRITE_BATCH_SIZE", 100)
+	if RequestLogWriteBatchSize <= 0 {
+		RequestLogWriteBatchSize = 100
+	}
+	RequestLogFlushIntervalMs = GetEnvOrDefault("REQUEST_LOG_FLUSH_INTERVAL_MS", 500)
+	if RequestLogFlushIntervalMs <= 0 {
+		RequestLogFlushIntervalMs = 500
+	}
+	RequestLogRedisFallbackEnabled = GetEnvOrDefaultBool("REQUEST_LOG_REDIS_FALLBACK_ENABLED", true)
+	RequestLogRedisQueueKey = strings.TrimSpace(GetEnvOrDefaultString("REQUEST_LOG_REDIS_QUEUE_KEY", "request_logs:queue"))
+	if RequestLogRedisQueueKey == "" {
+		RequestLogRedisQueueKey = "request_logs:queue"
+	}
+	RequestLogRedisDrainBatch = GetEnvOrDefault("REQUEST_LOG_REDIS_DRAIN_BATCH", 200)
+	if RequestLogRedisDrainBatch <= 0 {
+		RequestLogRedisDrainBatch = 200
+	}
 	TLSInsecureSkipVerify = GetEnvOrDefaultBool("TLS_INSECURE_SKIP_VERIFY", false)
 	if TLSInsecureSkipVerify {
 		if tr, ok := http.DefaultTransport.(*http.Transport); ok && tr != nil {

@@ -313,6 +313,9 @@ func InitResources() error {
 
 	perfmetrics.Init()
 
+	// Start request log async worker after Redis is initialized.
+	model.StartRequestLogWorker()
+
 	// 启动系统监控
 	common.StartSystemMonitor()
 

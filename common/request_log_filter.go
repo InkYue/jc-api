@@ -18,10 +18,16 @@ var requestLogOnlyUsersRWMutex sync.RWMutex
 var RequestLogOnlyUsersEnabled = false
 
 func InitRequestLogOnlyUsers(raw string) {
+	normalized := strings.TrimSpace(raw)
+
 	requestLogOnlyUsersRWMutex.Lock()
 	defer requestLogOnlyUsersRWMutex.Unlock()
 
-	RequestLogOnlyUsersRaw = strings.TrimSpace(raw)
+	if normalized == RequestLogOnlyUsersRaw {
+		return
+	}
+
+	RequestLogOnlyUsersRaw = normalized
 	requestLogOnlyUserIDs = make(map[int]struct{})
 	requestLogOnlyUsernames = make(map[string]struct{})
 	RequestLogOnlyUsersEnabled = false

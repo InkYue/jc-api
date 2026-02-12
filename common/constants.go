@@ -99,6 +99,27 @@ var RequestLogEnabled = false
 // RequestLogMaxBodyBytes limits the number of request body bytes stored per log row.
 var RequestLogMaxBodyBytes = 8 * 1024 * 1024
 
+// RequestLogAsyncEnabled controls whether request logs are written asynchronously.
+var RequestLogAsyncEnabled = true
+
+// RequestLogAsyncQueueSize controls in-memory async queue capacity.
+var RequestLogAsyncQueueSize = 4096
+
+// RequestLogWriteBatchSize controls DB batch write size for request logs.
+var RequestLogWriteBatchSize = 100
+
+// RequestLogFlushIntervalMs controls async flush interval in milliseconds.
+var RequestLogFlushIntervalMs = 500
+
+// RequestLogRedisFallbackEnabled controls whether to spill logs to Redis when in-memory queue is full.
+var RequestLogRedisFallbackEnabled = true
+
+// RequestLogRedisQueueKey is the Redis list key for request log spillover.
+var RequestLogRedisQueueKey = "request_logs:queue"
+
+// RequestLogRedisDrainBatch controls max number of items drained from Redis per flush cycle.
+var RequestLogRedisDrainBatch = 200
+
 var TLSInsecureSkipVerify bool
 var InsecureTLSConfig = &tls.Config{InsecureSkipVerify: true}
 
