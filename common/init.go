@@ -83,6 +83,11 @@ func InitEnv() {
 	MemoryCacheEnabled = os.Getenv("MEMORY_CACHE_ENABLED") == "true"
 	IsMasterNode = os.Getenv("NODE_TYPE") != "slave"
 	NodeName = os.Getenv("NODE_NAME")
+	RequestLogEnabled = GetEnvOrDefaultBool("REQUEST_LOG_ENABLED", false)
+	RequestLogMaxBodyBytes = GetEnvOrDefault("REQUEST_LOG_MAX_BODY_BYTES", 8*1024*1024)
+	if RequestLogMaxBodyBytes < 0 {
+		RequestLogMaxBodyBytes = 0
+	}
 	TLSInsecureSkipVerify = GetEnvOrDefaultBool("TLS_INSECURE_SKIP_VERIFY", false)
 	if TLSInsecureSkipVerify {
 		if tr, ok := http.DefaultTransport.(*http.Transport); ok && tr != nil {

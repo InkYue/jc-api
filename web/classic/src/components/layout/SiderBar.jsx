@@ -39,6 +39,7 @@ const routerMap = {
   user: '/console/user',
   subscription: '/console/subscription',
   log: '/console/log',
+  request_log: '/console/request-log',
   midjourney: '/console/midjourney',
   setting: '/console/setting',
   about: '/about',
@@ -188,6 +189,12 @@ const SiderBar = ({ onNavigate = () => {} }) => {
         itemKey: 'setting',
         to: '/setting',
         className: isRoot() ? '' : 'tableHiddle',
+      },
+      {
+        text: t('请求日志'),
+        itemKey: 'request_log',
+        to: '/console/request-log',
+        className: isAdmin() ? '' : 'tableHiddle',
       },
     ];
 

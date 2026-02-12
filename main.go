@@ -300,6 +300,10 @@ func InitResources() error {
 	if err != nil {
 		return err
 	}
+	err = model.InitRequestLogTable()
+	if err != nil {
+		return err
+	}
 
 	// Initialize Redis
 	err = common.InitRedisClient()

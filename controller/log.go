@@ -32,6 +32,35 @@ func GetAllLogs(c *gin.Context) {
 	return
 }
 
+func GetRequestLogs(c *gin.Context) {
+	pageInfo := common.GetPageQuery(c)
+	startTimestamp, _ := strconv.ParseInt(c.Query("start_timestamp"), 10, 64)
+	endTimestamp, _ := strconv.ParseInt(c.Query("end_timestamp"), 10, 64)
+	requestID := c.Query("request_id")
+	method := c.Query("method")
+	path := c.Query("path")
+	statusCode, _ := strconv.Atoi(c.Query("status_code"))
+	username := c.Query("username")
+	logs, total, err := model.GetRequestLogs(
+		startTimestamp,
+		endTimestamp,
+		requestID,
+		method,
+		path,
+		statusCode,
+		username,
+		pageInfo.GetStartIdx(),
+		pageInfo.GetPageSize(),
+	)
+	if err != nil {
+		common.ApiError(c, err)
+		return
+	}
+	pageInfo.SetTotal(int(total))
+	pageInfo.SetItems(logs)
+	common.ApiSuccess(c, pageInfo)
+}
+
 func GetUserLogs(c *gin.Context) {
 	pageInfo := common.GetPageQuery(c)
 	userId := c.GetInt("id")

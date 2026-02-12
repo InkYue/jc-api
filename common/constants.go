@@ -93,6 +93,12 @@ var MemoryCacheEnabled bool
 
 var LogConsumeEnabled = true
 
+// RequestLogEnabled controls whether request-level debug logs are persisted.
+var RequestLogEnabled = false
+
+// RequestLogMaxBodyBytes limits the number of request body bytes stored per log row.
+var RequestLogMaxBodyBytes = 8 * 1024 * 1024
+
 var TLSInsecureSkipVerify bool
 var InsecureTLSConfig = &tls.Config{InsecureSkipVerify: true}
 
