@@ -304,6 +304,10 @@ func InitResources() error {
 	if err != nil {
 		return err
 	}
+	err = model.InitRequestLogOutputTable()
+	if err != nil {
+		return err
+	}
 
 	// Initialize Redis
 	err = common.InitRedisClient()
@@ -315,6 +319,7 @@ func InitResources() error {
 
 	// Start request log async worker after Redis is initialized.
 	model.StartRequestLogWorker()
+	model.StartRequestLogOutputWorker()
 
 	// 启动系统监控
 	common.StartSystemMonitor()

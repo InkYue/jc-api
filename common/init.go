@@ -88,6 +88,11 @@ func InitEnv() {
 	if RequestLogMaxBodyBytes < 0 {
 		RequestLogMaxBodyBytes = 0
 	}
+	RequestLogCaptureOutputEnabled = GetEnvOrDefaultBool("REQUEST_LOG_CAPTURE_OUTPUT_ENABLED", true)
+	RequestLogMaxResponseBytes = GetEnvOrDefault("REQUEST_LOG_MAX_RESPONSE_BYTES", 512*1024)
+	if RequestLogMaxResponseBytes < 0 {
+		RequestLogMaxResponseBytes = 0
+	}
 	RequestLogAsyncEnabled = GetEnvOrDefaultBool("REQUEST_LOG_ASYNC_ENABLED", true)
 	RequestLogAsyncQueueSize = GetEnvOrDefault("REQUEST_LOG_ASYNC_QUEUE_SIZE", 4096)
 	if RequestLogAsyncQueueSize <= 0 {
@@ -109,6 +114,14 @@ func InitEnv() {
 	RequestLogRedisDrainBatch = GetEnvOrDefault("REQUEST_LOG_REDIS_DRAIN_BATCH", 200)
 	if RequestLogRedisDrainBatch <= 0 {
 		RequestLogRedisDrainBatch = 200
+	}
+	RequestLogOutputRedisQueueKey = strings.TrimSpace(GetEnvOrDefaultString("REQUEST_LOG_OUTPUT_REDIS_QUEUE_KEY", "request_log_outputs:queue"))
+	if RequestLogOutputRedisQueueKey == "" {
+		RequestLogOutputRedisQueueKey = "request_log_outputs:queue"
+	}
+	RequestLogOutputRedisDrainBatch = GetEnvOrDefault("REQUEST_LOG_OUTPUT_REDIS_DRAIN_BATCH", 200)
+	if RequestLogOutputRedisDrainBatch <= 0 {
+		RequestLogOutputRedisDrainBatch = 200
 	}
 	TLSInsecureSkipVerify = GetEnvOrDefaultBool("TLS_INSECURE_SKIP_VERIFY", false)
 	if TLSInsecureSkipVerify {

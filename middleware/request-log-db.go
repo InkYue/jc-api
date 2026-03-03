@@ -24,6 +24,8 @@ func RequestLogDB() gin.HandlerFunc {
 		}
 
 		startTime := time.Now()
+		captureWriter := newResponseCaptureWriter(c.Writer, common.RequestLogMaxResponseBytes)
+		c.Writer = captureWriter
 		c.Next()
 
 		if requestStartTime := common.GetContextKeyTime(c, constant.ContextKeyRequestStartTime); !requestStartTime.IsZero() {
@@ -58,7 +60,37 @@ func RequestLogDB() gin.HandlerFunc {
 			RequestBody:     body,
 		}
 		model.RecordRequestLog(params)
+		recordResponseLog(c, captureWriter)
 	}
+}
+
+func recordResponseLog(c *gin.Context, captureWriter *responseCaptureWriter) {
+	if !common.RequestLogCaptureOutputEnabled || captureWriter == nil {
+		return
+	}
+	requestID := c.GetString(common.RequestIdKey)
+	if requestID == "" {
+		return
+	}
+
+	contentType := normalizeContentType(c.Writer.Header().Get("Content-Type"))
+	isBinary := !isTextLikeContentType(contentType)
+	responseBody := ""
+	isBodyTruncated := captureWriter.isCapturedTruncated()
+	if !isBinary {
+		responseBody = captureWriter.capturedText()
+	} else {
+		isBodyTruncated = false
+	}
+	model.RecordRequestLogOutput(model.RecordRequestLogOutputParams{
+		RequestId:       requestID,
+		StatusCode:      c.Writer.Status(),
+		ResponseBytes:   captureWriter.totalBytes,
+		ContentType:     contentType,
+		IsBinary:        isBinary,
+		IsBodyTruncated: isBodyTruncated,
+		ResponseBody:    responseBody,
+	})
 }
 
 func shouldRecordRequestPath(path string) bool {
@@ -99,18 +131,7 @@ func shouldCaptureBody(method string, contentType string) bool {
 	if method == "GET" || method == "HEAD" || method == "OPTIONS" {
 		return false
 	}
-	contentType = strings.ToLower(contentType)
-	if idx := strings.Index(contentType, ";"); idx > 0 {
-		contentType = contentType[:idx]
-	}
-	if strings.HasPrefix(contentType, "application/json") ||
-		strings.HasSuffix(contentType, "+json") ||
-		strings.HasPrefix(contentType, "text/") ||
-		strings.HasPrefix(contentType, "application/x-www-form-urlencoded") ||
-		strings.Contains(contentType, "xml") {
-		return true
-	}
-	return false
+	return isTextLikeContentType(contentType)
 }
 
 func getStoredRequestBody(c *gin.Context) ([]byte, int, bool) {

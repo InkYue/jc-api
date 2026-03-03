@@ -61,6 +61,24 @@ func GetRequestLogs(c *gin.Context) {
 	common.ApiSuccess(c, pageInfo)
 }
 
+// GetRequestLogOutput returns the captured response output by request ID.
+func GetRequestLogOutput(c *gin.Context) {
+	requestID := c.Query("request_id")
+	if requestID == "" {
+		c.JSON(http.StatusOK, gin.H{
+			"success": false,
+			"message": "request_id is required",
+		})
+		return
+	}
+	output, err := model.GetRequestLogOutputByRequestID(requestID)
+	if err != nil {
+		common.ApiError(c, err)
+		return
+	}
+	common.ApiSuccess(c, output)
+}
+
 func GetUserLogs(c *gin.Context) {
 	pageInfo := common.GetPageQuery(c)
 	userId := c.GetInt("id")

@@ -99,6 +99,12 @@ var RequestLogEnabled = false
 // RequestLogMaxBodyBytes limits the number of request body bytes stored per log row.
 var RequestLogMaxBodyBytes = 8 * 1024 * 1024
 
+// RequestLogCaptureOutputEnabled controls whether response output is captured.
+var RequestLogCaptureOutputEnabled = true
+
+// RequestLogMaxResponseBytes limits the number of response body bytes stored per output row.
+var RequestLogMaxResponseBytes = 512 * 1024
+
 // RequestLogAsyncEnabled controls whether request logs are written asynchronously.
 var RequestLogAsyncEnabled = true
 
@@ -119,6 +125,12 @@ var RequestLogRedisQueueKey = "request_logs:queue"
 
 // RequestLogRedisDrainBatch controls max number of items drained from Redis per flush cycle.
 var RequestLogRedisDrainBatch = 200
+
+// RequestLogOutputRedisQueueKey is the Redis list key for request log output spillover.
+var RequestLogOutputRedisQueueKey = "request_log_outputs:queue"
+
+// RequestLogOutputRedisDrainBatch controls max number of output items drained from Redis per flush cycle.
+var RequestLogOutputRedisDrainBatch = 200
 
 var TLSInsecureSkipVerify bool
 var InsecureTLSConfig = &tls.Config{InsecureSkipVerify: true}
