@@ -37,8 +37,16 @@ type ToolCallResult struct {
 // request. Tool prices are resolved via GetToolPriceForModel which supports
 // model-prefix overrides. groupRatio is applied.
 func ComputeToolCallQuota(usage ToolCallUsage, groupRatio float64) ToolCallResult {
+	return ComputeToolCallQuotaWithUserRatio(usage, groupRatio, common.DefaultQuotaMultiplier)
+}
+
+// ComputeToolCallQuotaWithUserRatio calculates the total quota for all tool calls in a
+// request. Tool prices are resolved via GetToolPriceForModel which supports
+// model-prefix overrides. groupRatio and userRatio are applied.
+func ComputeToolCallQuotaWithUserRatio(usage ToolCallUsage, groupRatio float64, userRatio float64) ToolCallResult {
 	var items []ToolCallItem
 	totalQuota := 0
+	userRatio = common.NormalizeQuotaMultiplier(userRatio)
 
 	addItem := func(toolName string, count int) {
 		if count <= 0 {
@@ -49,7 +57,7 @@ func ComputeToolCallQuota(usage ToolCallUsage, groupRatio float64) ToolCallResul
 			return
 		}
 		totalPrice := pricePer1K * float64(count) / 1000
-		quota := int(math.Round(totalPrice * common.QuotaPerUnit * groupRatio))
+		quota := int(math.Round(totalPrice * common.QuotaPerUnit * groupRatio * userRatio))
 		items = append(items, ToolCallItem{
 			Name:       toolName,
 			CallCount:  count,
@@ -70,7 +78,7 @@ func ComputeToolCallQuota(usage ToolCallUsage, groupRatio float64) ToolCallResul
 
 	if usage.ImageGenerationCall {
 		price := operation_setting.GetGPTImage1PriceOnceCall(usage.ImageGenerationQuality, usage.ImageGenerationSize)
-		quota := int(math.Round(price * common.QuotaPerUnit * groupRatio))
+		quota := int(math.Round(price * common.QuotaPerUnit * groupRatio * userRatio))
 		items = append(items, ToolCallItem{
 			Name:       "image_generation",
 			CallCount:  1,

@@ -39,6 +39,7 @@ type QuotaInfo struct {
 	ModelPrice    float64
 	ModelRatio    float64
 	GroupRatio    float64
+	UserRatio     float64
 }
 
 func hasCustomModelRatio(modelName string, currentRatio float64) bool {
@@ -50,12 +51,13 @@ func hasCustomModelRatio(modelName string, currentRatio float64) bool {
 }
 
 func calculateAudioQuota(info QuotaInfo) int {
+	userRatio := decimal.NewFromFloat(common.NormalizeQuotaMultiplier(info.UserRatio))
 	if info.UsePrice {
 		modelPrice := decimal.NewFromFloat(info.ModelPrice)
 		quotaPerUnit := decimal.NewFromFloat(common.QuotaPerUnit)
 		groupRatio := decimal.NewFromFloat(info.GroupRatio)
 
-		quota := modelPrice.Mul(quotaPerUnit).Mul(groupRatio)
+		quota := modelPrice.Mul(quotaPerUnit).Mul(groupRatio).Mul(userRatio)
 		return int(quota.IntPart())
 	}
 
@@ -65,7 +67,7 @@ func calculateAudioQuota(info QuotaInfo) int {
 
 	groupRatio := decimal.NewFromFloat(info.GroupRatio)
 	modelRatio := decimal.NewFromFloat(info.ModelRatio)
-	ratio := groupRatio.Mul(modelRatio)
+	ratio := groupRatio.Mul(modelRatio).Mul(userRatio)
 
 	inputTextTokens := decimal.NewFromInt(int64(info.InputDetails.TextTokens))
 	outputTextTokens := decimal.NewFromInt(int64(info.OutputDetails.TextTokens))
@@ -136,6 +138,7 @@ func PreWssConsumeQuota(ctx *gin.Context, relayInfo *relaycommon.RelayInfo, usag
 		UsePrice:   relayInfo.UsePrice,
 		ModelRatio: modelRatio,
 		GroupRatio: actualGroupRatio,
+		UserRatio:  relayInfo.UserQuotaMultiplier,
 	}
 
 	quota := calculateAudioQuota(quotaInfo)
@@ -183,6 +186,7 @@ func PostWssConsumeQuota(ctx *gin.Context, relayInfo *relaycommon.RelayInfo, mod
 
 	modelRatio := relayInfo.PriceData.ModelRatio
 	groupRatio := relayInfo.PriceData.GroupRatioInfo.GroupRatio
+	userRatio := relayInfo.PriceData.UserRatio
 	modelPrice := relayInfo.PriceData.ModelPrice
 	usePrice := relayInfo.PriceData.UsePrice
 
@@ -199,6 +203,7 @@ func PostWssConsumeQuota(ctx *gin.Context, relayInfo *relaycommon.RelayInfo, mod
 		UsePrice:   usePrice,
 		ModelRatio: modelRatio,
 		GroupRatio: groupRatio,
+		UserRatio:  userRatio,
 	}
 
 	quota := calculateAudioQuota(quotaInfo)
@@ -209,10 +214,10 @@ func PostWssConsumeQuota(ctx *gin.Context, relayInfo *relaycommon.RelayInfo, mod
 	totalTokens := usage.TotalTokens
 	var logContent string
 	if !usePrice {
-		logContent = fmt.Sprintf("模型倍率 %.2f，补全倍率 %.2f，音频倍率 %.2f，音频补全倍率 %.2f，分组倍率 %.2f",
-			modelRatio, completionRatio.InexactFloat64(), audioRatio.InexactFloat64(), audioCompletionRatio.InexactFloat64(), groupRatio)
+		logContent = fmt.Sprintf("模型倍率 %.2f，补全倍率 %.2f，音频倍率 %.2f，音频补全倍率 %.2f，分组倍率 %.2f，用户倍率 %.2f",
+			modelRatio, completionRatio.InexactFloat64(), audioRatio.InexactFloat64(), audioCompletionRatio.InexactFloat64(), groupRatio, userRatio)
 	} else {
-		logContent = fmt.Sprintf("模型价格 %.2f，分组倍率 %.2f", modelPrice, groupRatio)
+		logContent = fmt.Sprintf("模型价格 %.2f，分组倍率 %.2f，用户倍率 %.2f", modelPrice, groupRatio, userRatio)
 	}
 
 	// record all the consume log even if quota is 0
@@ -304,6 +309,7 @@ func PostAudioConsumeQuota(ctx *gin.Context, relayInfo *relaycommon.RelayInfo, u
 
 	modelRatio := relayInfo.PriceData.ModelRatio
 	groupRatio := relayInfo.PriceData.GroupRatioInfo.GroupRatio
+	userRatio := relayInfo.PriceData.UserRatio
 	modelPrice := relayInfo.PriceData.ModelPrice
 	usePrice := relayInfo.PriceData.UsePrice
 
@@ -320,6 +326,7 @@ func PostAudioConsumeQuota(ctx *gin.Context, relayInfo *relaycommon.RelayInfo, u
 		UsePrice:   usePrice,
 		ModelRatio: modelRatio,
 		GroupRatio: groupRatio,
+		UserRatio:  userRatio,
 	}
 
 	quota := calculateAudioQuota(quotaInfo)
@@ -330,10 +337,10 @@ func PostAudioConsumeQuota(ctx *gin.Context, relayInfo *relaycommon.RelayInfo, u
 	totalTokens := usage.TotalTokens
 	var logContent string
 	if !usePrice {
-		logContent = fmt.Sprintf("模型倍率 %.2f，补全倍率 %.2f，音频倍率 %.2f，音频补全倍率 %.2f，分组倍率 %.2f",
-			modelRatio, completionRatio.InexactFloat64(), audioRatio.InexactFloat64(), audioCompletionRatio.InexactFloat64(), groupRatio)
+		logContent = fmt.Sprintf("模型倍率 %.2f，补全倍率 %.2f，音频倍率 %.2f，音频补全倍率 %.2f，分组倍率 %.2f，用户倍率 %.2f",
+			modelRatio, completionRatio.InexactFloat64(), audioRatio.InexactFloat64(), audioCompletionRatio.InexactFloat64(), groupRatio, userRatio)
 	} else {
-		logContent = fmt.Sprintf("模型价格 %.2f，分组倍率 %.2f", modelPrice, groupRatio)
+		logContent = fmt.Sprintf("模型价格 %.2f，分组倍率 %.2f，用户倍率 %.2f", modelPrice, groupRatio, userRatio)
 	}
 
 	// record all the consume log even if quota is 0

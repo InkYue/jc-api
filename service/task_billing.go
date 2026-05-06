@@ -43,6 +43,7 @@ func LogTaskConsumption(c *gin.Context, info *relaycommon.RelayInfo) {
 		other["model_ratio"] = info.PriceData.ModelRatio
 	}
 	other["group_ratio"] = info.PriceData.GroupRatioInfo.GroupRatio
+	other["user_ratio"] = common.NormalizeQuotaMultiplier(info.PriceData.UserRatio)
 	if info.PriceData.GroupRatioInfo.HasSpecialRatio {
 		other["user_group_ratio"] = info.PriceData.GroupRatioInfo.GroupSpecialRatio
 	}
@@ -125,6 +126,7 @@ func taskBillingOther(task *model.Task) map[string]interface{} {
 			other["model_ratio"] = bc.ModelRatio
 		}
 		other["group_ratio"] = bc.GroupRatio
+		other["user_ratio"] = common.NormalizeQuotaMultiplier(bc.UserRatio)
 		if len(bc.OtherRatios) > 0 {
 			for k, v := range bc.OtherRatios {
 				other[k] = v
@@ -283,9 +285,17 @@ func RecalculateTaskQuotaByTokens(ctx context.Context, task *model.Task, totalTo
 		finalGroupRatio = groupRatio
 	}
 
+	userRatio := common.DefaultQuotaMultiplier
 	// 计算 OtherRatios 乘积（视频折扣、时长等）
 	otherMultiplier := 1.0
 	if bc := task.PrivateData.BillingContext; bc != nil {
+		if bc.ModelRatio > 0 {
+			modelRatio = bc.ModelRatio
+		}
+		if bc.GroupRatio > 0 {
+			finalGroupRatio = bc.GroupRatio
+		}
+		userRatio = common.NormalizeQuotaMultiplier(bc.UserRatio)
 		for _, r := range bc.OtherRatios {
 			if r != 1.0 && r > 0 {
 				otherMultiplier *= r
@@ -293,9 +303,9 @@ func RecalculateTaskQuotaByTokens(ctx context.Context, task *model.Task, totalTo
 		}
 	}
 
-	// 计算实际应扣费额度: totalTokens * modelRatio * groupRatio * otherMultiplier
-	actualQuota := int(float64(totalTokens) * modelRatio * finalGroupRatio * otherMultiplier)
+	// 计算实际应扣费额度: totalTokens * modelRatio * groupRatio * userRatio * otherMultiplier
+	actualQuota := int(float64(totalTokens) * modelRatio * finalGroupRatio * userRatio * otherMultiplier)
 
-	reason := fmt.Sprintf("token重算：tokens=%d, modelRatio=%.2f, groupRatio=%.2f, otherMultiplier=%.4f", totalTokens, modelRatio, finalGroupRatio, otherMultiplier)
+	reason := fmt.Sprintf("token重算：tokens=%d, modelRatio=%.2f, groupRatio=%.2f, userRatio=%.2f, otherMultiplier=%.4f", totalTokens, modelRatio, finalGroupRatio, userRatio, otherMultiplier)
 	RecalculateTaskQuota(ctx, task, actualQuota, reason)
 }
