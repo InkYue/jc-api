@@ -344,6 +344,31 @@ export function UsersMutateDrawer({
 
                   <FormField
                     control={form.control}
+                    name='quota_multiplier'
+                    render={({ field }) => (
+                      <FormItem>
+                        <FormLabel>{t('User Multiplier')}</FormLabel>
+                        <FormControl>
+                          <Input
+                            type='number'
+                            min='0.000001'
+                            step='0.000001'
+                            value={field.value ?? 1}
+                            onChange={(event) => field.onChange(event.target.value)}
+                          />
+                        </FormControl>
+                        <FormDescription>
+                          {t(
+                            'Applied after model and group ratios. 1 means no extra adjustment.'
+                          )}
+                        </FormDescription>
+                        <FormMessage />
+                      </FormItem>
+                    )}
+                  />
+
+                  <FormField
+                    control={form.control}
                     name='remark'
                     render={({ field }) => (
                       <FormItem>

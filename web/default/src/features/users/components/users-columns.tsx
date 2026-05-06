@@ -23,6 +23,11 @@ function getQuotaProgressColor(percentage: number): string {
   return '[&_[data-slot=progress-indicator]]:bg-emerald-500'
 }
 
+function formatUserMultiplier(value?: number): string {
+  const multiplier = value && value > 0 ? value : 1
+  return `${multiplier.toFixed(6).replace(/\\.?0+$/, '')}x`
+}
+
 export function useUsersColumns(): ColumnDef<User>[] {
   const { t } = useTranslation()
   return [
@@ -201,6 +206,32 @@ export function useUsersColumns(): ColumnDef<User>[] {
         )
       },
       meta: { label: t('Quota') },
+    },
+    {
+      accessorKey: 'quota_multiplier',
+      header: ({ column }) => (
+        <DataTableColumnHeader column={column} title={t('User Multiplier')} />
+      ),
+      cell: ({ row }) => {
+        const multiplier = formatUserMultiplier(row.original.quota_multiplier)
+
+        return (
+          <Tooltip>
+            <TooltipTrigger render={<div className='cursor-help' />}>
+              <StatusBadge label={multiplier} variant='neutral' copyable={false} />
+            </TooltipTrigger>
+            <TooltipContent>
+              <p className='text-xs'>
+                {t(
+                  'Billing multiplier applied to this user after model and group ratios.'
+                )}
+              </p>
+            </TooltipContent>
+          </Tooltip>
+        )
+      },
+      enableSorting: false,
+      meta: { label: t('User Multiplier'), mobileHidden: true },
     },
     {
       accessorKey: 'group',
