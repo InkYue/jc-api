@@ -33,11 +33,22 @@ func appendRequestPath(ctx *gin.Context, relayInfo *relaycommon.RelayInfo, other
 	}
 }
 
+func relayUserRatio(relayInfo *relaycommon.RelayInfo) float64 {
+	if relayInfo == nil {
+		return common.DefaultQuotaMultiplier
+	}
+	if relayInfo.PriceData.UserRatio > 0 {
+		return common.NormalizeQuotaMultiplier(relayInfo.PriceData.UserRatio)
+	}
+	return common.NormalizeQuotaMultiplier(relayInfo.UserQuotaMultiplier)
+}
+
 func GenerateTextOtherInfo(ctx *gin.Context, relayInfo *relaycommon.RelayInfo, modelRatio, groupRatio, completionRatio float64,
 	cacheTokens int, cacheRatio float64, modelPrice float64, userGroupRatio float64) map[string]interface{} {
 	other := make(map[string]interface{})
 	other["model_ratio"] = modelRatio
 	other["group_ratio"] = groupRatio
+	other["user_ratio"] = relayUserRatio(relayInfo)
 	other["completion_ratio"] = completionRatio
 	other["cache_tokens"] = cacheTokens
 	other["cache_ratio"] = cacheRatio
@@ -258,6 +269,7 @@ func GenerateMjOtherInfo(relayInfo *relaycommon.RelayInfo, priceData types.Price
 	other := make(map[string]interface{})
 	other["model_price"] = priceData.ModelPrice
 	other["group_ratio"] = priceData.GroupRatioInfo.GroupRatio
+	other["user_ratio"] = common.NormalizeQuotaMultiplier(priceData.UserRatio)
 	if priceData.GroupRatioInfo.HasSpecialRatio {
 		other["user_group_ratio"] = priceData.GroupRatioInfo.GroupSpecialRatio
 	}
