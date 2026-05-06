@@ -13,6 +13,9 @@ export const userFormSchema = z.object({
   password: z.string().optional(),
   role: z.number().optional(),
   quota_dollars: z.number().min(0).optional(),
+  quota_multiplier: z.coerce
+    .number()
+    .positive('User multiplier must be greater than 0'),
   group: z.string().optional(),
   remark: z.string().optional(),
 })
@@ -29,6 +32,7 @@ export const USER_FORM_DEFAULT_VALUES: UserFormValues = {
   password: '',
   role: 1, // Default to common user
   quota_dollars: 0,
+  quota_multiplier: 1,
   group: DEFAULT_GROUP,
   remark: '',
 }
@@ -56,6 +60,7 @@ export function transformFormDataToPayload(
   } else {
     // For update: quota is adjusted atomically via /api/user/manage, not sent here
     payload.group = data.group
+    payload.quota_multiplier = data.quota_multiplier ?? 1
     payload.remark = data.remark || undefined
     payload.id = userId
   }
@@ -73,6 +78,7 @@ export function transformUserToFormDefaults(user: User): UserFormValues {
     password: '',
     role: user.role,
     quota_dollars: quotaUnitsToDollars(user.quota),
+    quota_multiplier: user.quota_multiplier ?? 1,
     group: user.group || DEFAULT_GROUP,
     remark: user.remark || '',
   }
