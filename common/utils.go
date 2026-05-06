@@ -205,6 +205,15 @@ func Interface2String(inter interface{}) string {
 	return fmt.Sprintf("%v", inter)
 }
 
+const DefaultQuotaMultiplier = 1.0
+
+func NormalizeQuotaMultiplier(multiplier float64) float64 {
+	if multiplier <= 0 {
+		return DefaultQuotaMultiplier
+	}
+	return multiplier
+}
+
 func UnescapeHTML(x string) interface{} {
 	return template.HTML(x)
 }

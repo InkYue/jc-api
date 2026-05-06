@@ -40,6 +40,7 @@ type User struct {
 	UsedQuota        int            `json:"used_quota" gorm:"type:int;default:0;column:used_quota"` // used quota
 	RequestCount     int            `json:"request_count" gorm:"type:int;default:0;"`               // request number
 	Group            string         `json:"group" gorm:"type:varchar(64);default:'default'"`
+	QuotaMultiplier  float64        `json:"quota_multiplier" gorm:"default:1" validate:"omitempty,gt=0"`
 	AffCode          string         `json:"aff_code" gorm:"type:varchar(32);column:aff_code;uniqueIndex"`
 	AffCount         int            `json:"aff_count" gorm:"type:int;default:0;column:aff_count"`
 	AffQuota         int            `json:"aff_quota" gorm:"type:int;default:0;column:aff_quota"`           // 邀请剩余额度
@@ -56,15 +57,20 @@ type User struct {
 
 func (user *User) ToBaseUser() *UserBase {
 	cache := &UserBase{
-		Id:       user.Id,
-		Group:    user.Group,
-		Quota:    user.Quota,
-		Status:   user.Status,
-		Username: user.Username,
-		Setting:  user.Setting,
-		Email:    user.Email,
+		Id:              user.Id,
+		Group:           user.Group,
+		Quota:           user.Quota,
+		QuotaMultiplier: user.GetQuotaMultiplier(),
+		Status:          user.Status,
+		Username:        user.Username,
+		Setting:         user.Setting,
+		Email:           user.Email,
 	}
 	return cache
+}
+
+func (user *User) GetQuotaMultiplier() float64 {
+	return common.NormalizeQuotaMultiplier(user.QuotaMultiplier)
 }
 
 func (user *User) GetAccessToken() string {
@@ -387,6 +393,7 @@ func (user *User) Insert(inviterId int) error {
 		}
 	}
 	user.Quota = common.QuotaForNewUser
+	user.QuotaMultiplier = common.NormalizeQuotaMultiplier(user.QuotaMultiplier)
 	//user.SetAccessToken(common.GetUUID())
 	user.AffCode = common.GetRandomString(4)
 
@@ -446,6 +453,7 @@ func (user *User) InsertWithTx(tx *gorm.DB, inviterId int) error {
 		}
 	}
 	user.Quota = common.QuotaForNewUser
+	user.QuotaMultiplier = common.NormalizeQuotaMultiplier(user.QuotaMultiplier)
 	user.AffCode = common.GetRandomString(4)
 
 	// 初始化用户设置
@@ -522,17 +530,21 @@ func (user *User) Edit(updatePassword bool) error {
 
 	newUser := *user
 	updates := map[string]interface{}{
-		"username":     newUser.Username,
-		"display_name": newUser.DisplayName,
-		"group":        newUser.Group,
-		"remark":       newUser.Remark,
+		"username":         newUser.Username,
+		"display_name":     newUser.DisplayName,
+		"group":            newUser.Group,
+		"quota_multiplier": common.NormalizeQuotaMultiplier(newUser.QuotaMultiplier),
+		"remark":           newUser.Remark,
 	}
 	if updatePassword {
 		updates["password"] = newUser.Password
 	}
 
-	DB.First(&user, user.Id)
+	DB.First(user, user.Id)
 	if err = DB.Model(user).Updates(updates).Error; err != nil {
+		return err
+	}
+	if err = DB.First(user, user.Id).Error; err != nil {
 		return err
 	}
 
