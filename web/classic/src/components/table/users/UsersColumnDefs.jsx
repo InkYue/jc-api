@@ -177,6 +177,25 @@ const renderQuotaUsage = (text, record, t) => {
   );
 };
 
+const formatUserMultiplier = (value) => {
+  const multiplier = Number(value) > 0 ? Number(value) : 1;
+  return `${multiplier.toFixed(6).replace(/\\.?0+$/, '')}x`;
+};
+
+const renderUserMultiplier = (text, record, t) => {
+  const multiplier = formatUserMultiplier(record.quota_multiplier);
+  return (
+    <Tooltip
+      content={t('在模型倍率和分组倍率之后应用，1 表示不额外调整')}
+      position='top'
+    >
+      <Tag color='white' shape='circle'>
+        {multiplier}
+      </Tag>
+    </Tooltip>
+  );
+};
+
 /**
  * Render invite information
  */
@@ -337,6 +356,11 @@ export const getUsersColumns = ({
       title: t('剩余额度/总额度'),
       key: 'quota_usage',
       render: (text, record) => renderQuotaUsage(text, record, t),
+    },
+    {
+      title: t('用户倍率'),
+      dataIndex: 'quota_multiplier',
+      render: (text, record) => renderUserMultiplier(text, record, t),
     },
     {
       title: t('分组'),

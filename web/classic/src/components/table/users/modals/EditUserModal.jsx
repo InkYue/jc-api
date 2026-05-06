@@ -92,6 +92,7 @@ const EditUserModal = (props) => {
     email: '',
     quota: 0,
     quota_amount: 0,
+    quota_multiplier: 1,
     group: 'default',
     remark: '',
   });
@@ -117,6 +118,7 @@ const EditUserModal = (props) => {
       data.quota_amount = Number(
         quotaToDisplayAmount(data.quota || 0).toFixed(6),
       );
+      data.quota_multiplier = data.quota_multiplier || 1;
       setInputs({ ...getInitValues(), ...data });
     } else {
       showError(message);
@@ -152,6 +154,7 @@ const EditUserModal = (props) => {
     delete payload.quota_amount;
     if (userId) {
       payload.id = parseInt(userId);
+      payload.quota_multiplier = Number(payload.quota_multiplier) || 1;
     }
     const url = userId ? `/api/user/` : `/api/user/self`;
     const res = await API.put(url, payload);
@@ -365,6 +368,20 @@ const EditUserModal = (props) => {
                           allowAdditions
                           search
                           rules={[{ required: true, message: t('请选择分组') }]}
+                        />
+                      </Col>
+
+                      <Col span={24}>
+                        <Form.InputNumber
+                          field='quota_multiplier'
+                          label={t('用户倍率')}
+                          min={0.000001}
+                          precision={6}
+                          step={0.000001}
+                          style={{ width: '100%' }}
+                          extraText={t(
+                            '在模型倍率和分组倍率之后应用，1 表示不额外调整',
+                          )}
                         />
                       </Col>
 
